@@ -2,8 +2,9 @@
     import { onMount } from "svelte";
 
     let subject: string = "";
-    let duration: number = 0;
+    let duration: number = 0; // Set the initial value to 0
     let date: string = "";
+    let completed: boolean = false;
 
     type StudySession = {
         id: number;
@@ -20,7 +21,7 @@
         try {
             const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
             studySessions = await res.json();
-            console.log("Fetched sessions:", studySessions); // Log the sessions to console
+            console.log("Fetched sessions:", studySessions);
         } catch (error) {
             console.error("Error fetching sessions:", error);
         }
@@ -29,7 +30,7 @@
     // Add a study session
     async function addSession() {
         if (subject && duration && date) {
-            const newSession = { subject, duration, date, completed: false };
+            const newSession = { subject, duration, date, completed };
 
             try {
                 const res = await fetch("https://studylog-backend-production.up.railway.app/api/study", {
@@ -38,42 +39,18 @@
                     body: JSON.stringify(newSession),
                 });
 
-                const data = await res.json();
-                console.log("Added session:", data);
-
                 if (res.ok) {
-                    // Force fetch again after adding a new session
-                    await fetchSessions(); // This will re-fetch and log the updated sessions to the console
+                    console.log("Added session:", newSession);
+                    await fetchSessions(); // Refresh list after adding
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
             }
 
-            // Clear form inputs
             subject = "";
             duration = 0; // Reset duration to 0
             date = "";
-        }
-    }
-
-    // Complete a study session
-    async function completeSession(id: number) {
-        try {
-            const sessionToComplete = studySessions.find(session => session.id === id);
-            if (sessionToComplete) {
-                sessionToComplete.completed = true;
-                const res = await fetch(`https://studylog-backend-production.up.railway.app/api/study/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ completed: true }),
-                });
-
-                if (res.ok) {
-                    await fetchSessions(); // Re-fetch the sessions after marking it completed
-                }
-            }
-        } catch (error) {
-            console.error("Error completing session:", error);
+            completed = false; // Reset completed state
         }
     }
 
@@ -85,7 +62,7 @@
             });
 
             if (res.ok) {
-                await fetchSessions(); // Re-fetch the sessions after deleting the session
+                await fetchSessions(); // Refresh list after deletion
             }
         } catch (error) {
             console.error("Error deleting session:", error);
@@ -104,30 +81,38 @@
         <input type="text" bind:value={subject} placeholder="Enter subject" />
         <input type="number" bind:value={duration} placeholder="Duration (minutes)" />
         <input type="date" bind:value={date} />
+        <label>
+            Completed: 
+            <input type="checkbox" bind:checked={completed} />
+        </label>
         <button on:click={addSession}>➕ Add Study Session</button>
     </div>
 
-    <div class="study-sessions">
-        <div class="sessions-left">
-            <h2>To Do</h2>
+    <div class="sessions">
+        <div class="to-do">
+            <h3>Sessions To Do</h3>
             <ul>
-                {#each studySessions.filter(session => !session.completed) as session (session.id)}
-                    <li>
-                        {session.subject} - {session.duration} mins on {session.date}
-                        <button class="complete-btn" on:click={() => completeSession(session.id)}>✅ Complete</button>
-                        <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
-                    </li>
+                {#each studySessions as session (session.id)}
+                    {#if !session.completed}
+                        <li>
+                            {session.subject} - {session.duration} mins on {session.date}
+                            <button class="complete-btn" on:click={() => completeSession(session.id)}>✅ Complete</button>
+                            <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
+                        </li>
+                    {/if}
                 {/each}
             </ul>
         </div>
-        <div class="sessions-right">
-            <h2>Completed</h2>
+        <div class="done">
+            <h3>Completed Sessions</h3>
             <ul>
-                {#each studySessions.filter(session => session.completed) as session (session.id)}
-                    <li>
-                        {session.subject} - {session.duration} mins on {session.date}
-                        <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
-                    </li>
+                {#each studySessions as session (session.id)}
+                    {#if session.completed}
+                        <li>
+                            {session.subject} - {session.duration} mins on {session.date}
+                            <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
+                        </li>
+                    {/if}
                 {/each}
             </ul>
         </div>
@@ -181,7 +166,17 @@
         background-color: #005bb5;
     }
 
-    .delete-btn {
+    .sessions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+
+    .to-do, .done {
+        width: 45%;
+    }
+
+    .delete-btn, .complete-btn {
         background-color: #ff4d4d;
         margin-left: 10px;
     }
@@ -191,23 +186,11 @@
     }
 
     .complete-btn {
-        background-color: #4caf50;
-        margin-left: 10px;
+        background-color: #4CAF50;
     }
 
     .complete-btn:hover {
-        background-color: #2e7d32;
-    }
-
-    .study-sessions {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 20px;
-        width: 80%;
-    }
-
-    .sessions-left, .sessions-right {
-        width: 45%;
+        background-color: #388E3C;
     }
 
     ul {
@@ -224,6 +207,6 @@
         background: #f9f9f9;
         border-radius: 5px;
         margin-top: 10px;
-        width: 100%;
+        width: 300px;
     }
 </style>
