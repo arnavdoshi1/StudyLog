@@ -41,9 +41,9 @@
                 const data = await res.json();
                 console.log("Added session:", data);
 
-                // Refresh session list after adding the new session
+                // Manually update studySessions with the new session immediately
                 if (res.ok) {
-                    studySessions = [...studySessions, data]; // Directly update the session list
+                    studySessions = [data, ...studySessions]; // Add the new session to the start of the list
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
