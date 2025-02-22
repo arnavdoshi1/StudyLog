@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
 
     let subject: string = "";
-    let duration: number = 0; // Set the initial value to 0
+    let duration: number = 0;
     let date: string = "";
 
     type StudySession = {
@@ -10,7 +10,7 @@
         subject: string;
         duration: number;
         date: string;
-        completed: boolean; // Add this line for the completed status
+        completed: boolean;
     };
 
     let studySessions: StudySession[] = [];
@@ -40,13 +40,16 @@
 
                 const data = await res.json();
                 console.log("Added session:", data);
+
+                // Refresh session list after adding the new session
                 if (res.ok) {
-                    await fetchSessions(); // Refresh list
+                    studySessions = [...studySessions, data]; // Directly update the session list
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
             }
 
+            // Clear form inputs
             subject = "";
             duration = 0; // Reset duration to 0
             date = "";
@@ -82,7 +85,7 @@
             });
 
             if (res.ok) {
-                await fetchSessions(); // Refresh list
+                studySessions = studySessions.filter(session => session.id !== id); // Remove the session from the list
             }
         } catch (error) {
             console.error("Error deleting session:", error);
