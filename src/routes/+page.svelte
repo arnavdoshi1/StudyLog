@@ -13,12 +13,16 @@
     };
 
     let studySessions: StudySession[] = [];
+    let totalSessions: number = 0;
+    let completedSessions: number = 0;
 
     // Fetch study sessions from backend
     async function fetchSessions() {
         try {
             const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
             studySessions = await res.json();
+            completedSessions = studySessions.filter(session => session.duration > 0).length;
+            totalSessions = studySessions.length;
         } catch (error) {
             console.error("Error fetching sessions:", error);
         }
@@ -79,10 +83,21 @@
         <button on:click={addSession}>➕ Add Study Session</button>
     </div>
 
+    <div class="progress">
+        <h2>Progress</h2>
+        <p>Completed Sessions: {completedSessions} / {totalSessions}</p>
+        <div class="progress-bar">
+            <div class="filled" style="width: {totalSessions ? (completedSessions / totalSessions) * 100 : 0}%"></div>
+        </div>
+    </div>
+
     <ul>
         {#each studySessions as session (session.id)}
-            <li>
-                {session.subject} - {session.duration} mins on {session.date}
+            <li class="card">
+                <div class="session-info">
+                    <h3>{session.subject}</h3>
+                    <p>{session.duration} mins on {session.date}</p>
+                </div>
                 <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
             </li>
         {/each}
@@ -98,11 +113,13 @@
         height: 100vh;
         font-family: sans-serif;
         text-align: center;
+        background-color: #f4f4f4;
     }
 
     h1 {
         font-size: 2rem;
         color: #0070f3;
+        margin-bottom: 20px;
     }
 
     .input-container {
@@ -113,21 +130,17 @@
         width: 300px;
     }
 
-    input {
+    input, button {
         padding: 10px;
         font-size: 1rem;
-        border: 1px solid #ccc;
         border-radius: 5px;
         width: 100%;
     }
 
     button {
-        padding: 10px;
-        font-size: 1rem;
         background-color: #0070f3;
         color: white;
         border: none;
-        border-radius: 5px;
         cursor: pointer;
         transition: background 0.3s;
     }
@@ -136,29 +149,51 @@
         background-color: #005bb5;
     }
 
-    .delete-btn {
-        background-color: #ff4d4d;
-        margin-left: 10px;
+    .progress {
+        margin-top: 20px;
+        width: 300px;
+        text-align: left;
     }
 
-    .delete-btn:hover {
-        background-color: #cc0000;
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background-color: #ccc;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+
+    .filled {
+        height: 100%;
+        background-color: #4caf50;
+        border-radius: 5px;
     }
 
     ul {
         margin-top: 20px;
         list-style: none;
         padding: 0;
+        width: 300px;
     }
 
-    li {
+    .card {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 10px;
-        background: #f9f9f9;
+        background: #fff;
         border-radius: 5px;
         margin-top: 10px;
-        width: 300px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .delete-btn {
+        background-color: #ff4d4d;
+        margin-left: 10px;
+        cursor: pointer;
+    }
+
+    .delete-btn:hover {
+        background-color: #cc0000;
     }
 </style>
