@@ -23,6 +23,10 @@
         try {
             const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
             const data = await res.json();
+            
+            // Log the fetched data for debugging
+            console.log("Fetched sessions:", data);
+
             studySessions = data.map((session: StudySession) => {
                 if (session.completed) {
                     completedSessions.push(session);
@@ -49,12 +53,20 @@
                 });
 
                 if (res.ok) {
+                    // Log the response to ensure the session was added
+                    const addedSession = await res.json();
+                    console.log("Added session:", addedSession);
+
+                    // Fetch updated sessions after adding
                     await fetchSessions(); // Refresh list
+                } else {
+                    console.error("Error adding session:", res.status);
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
             }
 
+            // Reset form values
             subject = "";
             duration = 0;
             date = "";
