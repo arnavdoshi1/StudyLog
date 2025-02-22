@@ -1,53 +1,72 @@
 <script lang="ts">
+    import { onMount } from "svelte";
+
     let subject: string = "";
-    let duration: string = "";
+    let duration: number = 0; // Set the initial value to 0
     let date: string = "";
 
     type StudySession = {
         id: number;
         subject: string;
-        duration: string;
+        duration: number;
         date: string;
     };
 
     let studySessions: StudySession[] = [];
 
-    // Ensure `localStorage` is only accessed in the browser
-    if (typeof window !== "undefined") {
-        studySessions = JSON.parse(localStorage.getItem("studySessions") || "[]");
+    // Fetch study sessions from backend
+    async function fetchSessions() {
+        try {
+            const res = await fetch("https://studylog-backend-production.up.railway.app/");
+
+            studySessions = await res.json();
+        } catch (error) {
+            console.error("Error fetching sessions:", error);
+        }
     }
 
-    function addSession() {
+    // Add a study session
+    async function addSession() {
         if (subject && duration && date) {
-            const newSession: StudySession = {
-                id: Date.now(), // Unique ID for each session
-                subject,
-                duration,
-                date
-            };
+            const newSession = { subject, duration, date };
 
-            studySessions = [...studySessions, newSession];
+            try {
+                const res = await fetch("https://studylog-backend-production.up.railway.app/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newSession),
+                });
 
-            // Save to local storage (only in browser)
-            if (typeof window !== "undefined") {
-                localStorage.setItem("studySessions", JSON.stringify(studySessions));
+                if (res.ok) {
+                    await fetchSessions(); // Refresh list
+                }
+            } catch (error) {
+                console.error("Error adding session:", error);
             }
 
             subject = "";
-            duration = "";
+            duration = 0; // Reset duration to 0
             date = "";
         }
     }
 
-    function deleteSession(id: number) {
-        studySessions = [...studySessions.filter(session => session.id !== id)];
+    // Delete a study session
+    async function deleteSession(id: number) {
+        try {
+            const res = await fetch(`https://studylog-backend-production.up.railway.app/${id}`, {
+                method: "DELETE",
+            });
 
-        // Force reactivity by updating localStorage and reloading from it
-        if (typeof window !== "undefined") {
-            localStorage.setItem("studySessions", JSON.stringify(studySessions));
-            studySessions = JSON.parse(localStorage.getItem("studySessions") || "[]");
+            if (res.ok) {
+                await fetchSessions(); // Refresh list
+            }
+        } catch (error) {
+            console.error("Error deleting session:", error);
         }
     }
+
+    // Load study sessions on page load
+    onMount(fetchSessions);
 </script>
 
 <main>
