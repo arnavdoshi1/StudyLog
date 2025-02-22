@@ -4,14 +4,12 @@
     let subject: string = "";
     let duration: number = 0; // Set the initial value to 0
     let date: string = "";
-    let completed: boolean = false;
 
     type StudySession = {
         id: number;
         subject: string;
         duration: number;
         date: string;
-        completed: boolean;
     };
 
     let studySessions: StudySession[] = [];
@@ -21,7 +19,6 @@
         try {
             const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
             studySessions = await res.json();
-            console.log("Fetched sessions:", studySessions);
         } catch (error) {
             console.error("Error fetching sessions:", error);
         }
@@ -30,7 +27,7 @@
     // Add a study session
     async function addSession() {
         if (subject && duration && date) {
-            const newSession = { subject, duration, date, completed };
+            const newSession = { subject, duration, date };
 
             try {
                 const res = await fetch("https://studylog-backend-production.up.railway.app/api/study", {
@@ -40,8 +37,7 @@
                 });
 
                 if (res.ok) {
-                    console.log("Added session:", newSession);
-                    await fetchSessions(); // Refresh list after adding
+                    await fetchSessions(); // Refresh list
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
@@ -50,7 +46,6 @@
             subject = "";
             duration = 0; // Reset duration to 0
             date = "";
-            completed = false; // Reset completed state
         }
     }
 
@@ -62,7 +57,7 @@
             });
 
             if (res.ok) {
-                await fetchSessions(); // Refresh list after deletion
+                await fetchSessions(); // Refresh list
             }
         } catch (error) {
             console.error("Error deleting session:", error);
@@ -81,42 +76,17 @@
         <input type="text" bind:value={subject} placeholder="Enter subject" />
         <input type="number" bind:value={duration} placeholder="Duration (minutes)" />
         <input type="date" bind:value={date} />
-        <label>
-            Completed: 
-            <input type="checkbox" bind:checked={completed} />
-        </label>
         <button on:click={addSession}>➕ Add Study Session</button>
     </div>
 
-    <div class="sessions">
-        <div class="to-do">
-            <h3>Sessions To Do</h3>
-            <ul>
-                {#each studySessions as session (session.id)}
-                    {#if !session.completed}
-                        <li>
-                            {session.subject} - {session.duration} mins on {session.date}
-                            <button class="complete-btn" on:click={() => completeSession(session.id)}>✅ Complete</button>
-                            <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
-                        </li>
-                    {/if}
-                {/each}
-            </ul>
-        </div>
-        <div class="done">
-            <h3>Completed Sessions</h3>
-            <ul>
-                {#each studySessions as session (session.id)}
-                    {#if session.completed}
-                        <li>
-                            {session.subject} - {session.duration} mins on {session.date}
-                            <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
-                        </li>
-                    {/if}
-                {/each}
-            </ul>
-        </div>
-    </div>
+    <ul>
+        {#each studySessions as session (session.id)}
+            <li>
+                {session.subject} - {session.duration} mins on {session.date}
+                <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
+            </li>
+        {/each}
+    </ul>
 </main>
 
 <style>
@@ -166,31 +136,13 @@
         background-color: #005bb5;
     }
 
-    .sessions {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 30px;
-    }
-
-    .to-do, .done {
-        width: 45%;
-    }
-
-    .delete-btn, .complete-btn {
+    .delete-btn {
         background-color: #ff4d4d;
         margin-left: 10px;
     }
 
     .delete-btn:hover {
         background-color: #cc0000;
-    }
-
-    .complete-btn {
-        background-color: #4CAF50;
-    }
-
-    .complete-btn:hover {
-        background-color: #388E3C;
     }
 
     ul {
