@@ -38,14 +38,17 @@
           });
   
           if (res.ok) {
+            // Fetch sessions again immediately after adding a new one
             await fetchSessions(); // Refresh list
+          } else {
+            console.error("Error adding session:", await res.text());
           }
         } catch (error) {
           console.error("Error adding session:", error);
         }
   
         subject = "";
-        duration = 0;
+        duration = 0; // Reset duration to 0
         date = "";
       }
     }
