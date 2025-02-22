@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { fly } from 'svelte/transition';
 
     let subject: string = "";
-    let duration: number = 0; // Set the initial value to 0
+    let duration: number = 0;
     let date: string = "";
 
     type StudySession = {
@@ -10,19 +11,26 @@
         subject: string;
         duration: number;
         date: string;
+        completed: boolean;
     };
 
     let studySessions: StudySession[] = [];
-    let totalSessions: number = 0;
-    let completedSessions: number = 0;
+    let completedSessions: StudySession[] = [];
+    let pendingSessions: StudySession[] = [];
 
     // Fetch study sessions from backend
     async function fetchSessions() {
         try {
             const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
-            studySessions = await res.json();
-            completedSessions = studySessions.filter(session => session.duration > 0).length;
-            totalSessions = studySessions.length;
+            const data = await res.json();
+            studySessions = data.map((session: StudySession) => {
+                if (session.completed) {
+                    completedSessions.push(session);
+                } else {
+                    pendingSessions.push(session);
+                }
+                return session;
+            });
         } catch (error) {
             console.error("Error fetching sessions:", error);
         }
@@ -31,7 +39,7 @@
     // Add a study session
     async function addSession() {
         if (subject && duration && date) {
-            const newSession = { subject, duration, date };
+            const newSession = { subject, duration, date, completed: false };
 
             try {
                 const res = await fetch("https://studylog-backend-production.up.railway.app/api/study", {
@@ -48,9 +56,23 @@
             }
 
             subject = "";
-            duration = 0; // Reset duration to 0
+            duration = 0;
             date = "";
         }
+    }
+
+    // Mark session as completed and move it to the completed list
+    function completeSession(session: StudySession) {
+        session.completed = true;
+        completedSessions = [...completedSessions, session];
+        pendingSessions = pendingSessions.filter((s) => s.id !== session.id);
+
+        // Update the backend to mark it as completed
+        fetch(`https://studylog-backend-production.up.railway.app/api/study/${session.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ completed: true }),
+        });
     }
 
     // Delete a study session
@@ -83,25 +105,44 @@
         <button on:click={addSession}>➕ Add Study Session</button>
     </div>
 
-    <div class="progress">
-        <h2>Progress</h2>
-        <p>Completed Sessions: {completedSessions} / {totalSessions}</p>
-        <div class="progress-bar">
-            <div class="filled" style="width: {totalSessions ? (completedSessions / totalSessions) * 100 : 0}%"></div>
+    <div class="sessions-container">
+        <!-- Pending Sessions (To-Do) -->
+        <div class="sessions-list">
+            <h2>To-Do</h2>
+            <ul>
+                {#each pendingSessions as session (session.id)}
+                    <li class="card" in:fly={{ x: -200 }} out:fly={{ x: 200 }}>
+                        <div class="session-info">
+                            <h3>{session.subject}</h3>
+                            <p>{session.duration} mins on {session.date}</p>
+                        </div>
+                        <div>
+                            <button class="complete-btn" on:click={() => completeSession(session)}>
+                                ✅ Mark as Completed
+                            </button>
+                            <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+        </div>
+
+        <!-- Completed Sessions -->
+        <div class="sessions-list">
+            <h2>Completed</h2>
+            <ul>
+                {#each completedSessions as session (session.id)}
+                    <li class="card" in:fly={{ x: 200 }} out:fly={{ x: -200 }}>
+                        <div class="session-info">
+                            <h3>{session.subject}</h3>
+                            <p>{session.duration} mins on {session.date}</p>
+                        </div>
+                        <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
+                    </li>
+                {/each}
+            </ul>
         </div>
     </div>
-
-    <ul>
-        {#each studySessions as session (session.id)}
-            <li class="card">
-                <div class="session-info">
-                    <h3>{session.subject}</h3>
-                    <p>{session.duration} mins on {session.date}</p>
-                </div>
-                <button class="delete-btn" on:click={() => deleteSession(session.id)}>❌ Delete</button>
-            </li>
-        {/each}
-    </ul>
 </main>
 
 <style>
@@ -149,31 +190,15 @@
         background-color: #005bb5;
     }
 
-    .progress {
-        margin-top: 20px;
-        width: 300px;
-        text-align: left;
+    .sessions-container {
+        display: flex;
+        justify-content: space-between;
+        width: 80%;
+        margin-top: 40px;
     }
 
-    .progress-bar {
-        width: 100%;
-        height: 10px;
-        background-color: #ccc;
-        border-radius: 5px;
-        margin-top: 10px;
-    }
-
-    .filled {
-        height: 100%;
-        background-color: #4caf50;
-        border-radius: 5px;
-    }
-
-    ul {
-        margin-top: 20px;
-        list-style: none;
-        padding: 0;
-        width: 300px;
+    .sessions-list {
+        width: 45%;
     }
 
     .card {
@@ -185,6 +210,13 @@
         border-radius: 5px;
         margin-top: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .complete-btn {
+        background-color: #4caf50;
+        margin-left: 10px;
+        cursor: pointer;
     }
 
     .delete-btn {
@@ -193,7 +225,22 @@
         cursor: pointer;
     }
 
+    .complete-btn:hover {
+        background-color: #388e3c;
+    }
+
     .delete-btn:hover {
         background-color: #cc0000;
+    }
+
+    ul {
+        margin-top: 20px;
+        list-style: none;
+        padding: 0;
+    }
+
+    .session-info h3 {
+        margin: 0;
+        color: #333;
     }
 </style>
