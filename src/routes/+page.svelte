@@ -41,9 +41,9 @@
                 const data = await res.json();
                 console.log("Added session:", data);
 
-                // Immediately update the studySessions array
+                // Directly update the studySessions array immediately without waiting for a fetch
                 if (res.ok) {
-                    studySessions = [data, ...studySessions]; // Add to the front of the array
+                    studySessions = [data, ...studySessions]; // Prepend the new session to the list
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
