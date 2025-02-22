@@ -41,9 +41,11 @@
                 const data = await res.json();
                 console.log("Added session:", data);
 
-                // Directly update the studySessions array immediately without waiting for a fetch
+                // Directly add the session to the studySessions array for immediate UI update
                 if (res.ok) {
-                    studySessions = [data, ...studySessions]; // Prepend the new session to the list
+                    studySessions = [data, ...studySessions]; // Add the new session to the list
+                    // Ensure Svelte recognizes this change
+                    $: studySessions;
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
