@@ -23,9 +23,7 @@
         try {
             const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
             const data = await res.json();
-            
-            // Log the fetched data for debugging
-            console.log("Fetched sessions:", data);
+            console.log("Fetched sessions:", data); // Log fetched data to check
 
             studySessions = data.map((session: StudySession) => {
                 if (session.completed) {
@@ -46,6 +44,8 @@
             const newSession = { subject, duration, date, completed: false };
 
             try {
+                console.log("Adding new session:", newSession); // Log new session before sending
+
                 const res = await fetch("https://studylog-backend-production.up.railway.app/api/study", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -53,11 +53,8 @@
                 });
 
                 if (res.ok) {
-                    // Log the response to ensure the session was added
                     const addedSession = await res.json();
                     console.log("Added session:", addedSession);
-
-                    // Fetch updated sessions after adding
                     await fetchSessions(); // Refresh list
                 } else {
                     console.error("Error adding session:", res.status);
@@ -70,16 +67,19 @@
             subject = "";
             duration = 0;
             date = "";
+        } else {
+            console.log("Invalid input values:", subject, duration, date); // Check invalid inputs
         }
     }
 
     // Mark session as completed and move it to the completed list
     function completeSession(session: StudySession) {
+        console.log("Completing session:", session);
+
         session.completed = true;
         completedSessions = [...completedSessions, session];
         pendingSessions = pendingSessions.filter((s) => s.id !== session.id);
 
-        // Update the backend to mark it as completed
         fetch(`https://studylog-backend-production.up.railway.app/api/study/${session.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -90,6 +90,8 @@
     // Delete a study session
     async function deleteSession(id: number) {
         try {
+            console.log("Deleting session with ID:", id); // Log session ID being deleted
+
             const res = await fetch(`https://studylog-backend-production.up.railway.app/api/study/${id}`, {
                 method: "DELETE",
             });
