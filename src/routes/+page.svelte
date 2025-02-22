@@ -17,8 +17,7 @@
     // Fetch study sessions from backend
     async function fetchSessions() {
         try {
-            const res = await fetch("https://studylog-backend-production.up.railway.app/");
-
+            const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
             studySessions = await res.json();
         } catch (error) {
             console.error("Error fetching sessions:", error);
@@ -31,7 +30,7 @@
             const newSession = { subject, duration, date };
 
             try {
-                const res = await fetch("https://studylog-backend-production.up.railway.app/", {
+                const res = await fetch("https://studylog-backend-production.up.railway.app/api/study", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(newSession),
@@ -53,7 +52,7 @@
     // Delete a study session
     async function deleteSession(id: number) {
         try {
-            const res = await fetch(`https://studylog-backend-production.up.railway.app/${id}`, {
+            const res = await fetch(`https://studylog-backend-production.up.railway.app/api/study/${id}`, {
                 method: "DELETE",
             });
 
