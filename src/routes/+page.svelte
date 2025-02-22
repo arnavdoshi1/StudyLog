@@ -20,7 +20,7 @@
         try {
             const res = await fetch("https://studylog-backend-production.up.railway.app/api/study");
             studySessions = await res.json();
-            console.log("Fetched sessions:", studySessions);
+            console.log("Fetched sessions:", studySessions); // Log the sessions to console
         } catch (error) {
             console.error("Error fetching sessions:", error);
         }
@@ -38,9 +38,12 @@
                     body: JSON.stringify(newSession),
                 });
 
+                const data = await res.json();
+                console.log("Added session:", data);
+
                 if (res.ok) {
-                    console.log("Added session successfully");
-                    await fetchSessions(); // Re-fetch the sessions after adding the new one
+                    // Fetch the sessions again after adding the new one
+                    await fetchSessions(); // This will re-fetch and log the updated sessions to the console
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
