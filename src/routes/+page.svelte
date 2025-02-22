@@ -42,7 +42,7 @@
                 console.log("Added session:", data);
 
                 if (res.ok) {
-                    // Fetch the sessions again after adding the new one
+                    // Force fetch again after adding a new session
                     await fetchSessions(); // This will re-fetch and log the updated sessions to the console
                 }
             } catch (error) {
