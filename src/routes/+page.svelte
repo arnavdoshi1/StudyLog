@@ -38,14 +38,9 @@
                     body: JSON.stringify(newSession),
                 });
 
-                const data = await res.json();
-                console.log("Added session:", data);
-
-                // Directly add the session to the studySessions array for immediate UI update
                 if (res.ok) {
-                    studySessions = [data, ...studySessions]; // Add the new session to the list
-                    // Ensure Svelte recognizes this change
-                    $: studySessions;
+                    console.log("Added session successfully");
+                    await fetchSessions(); // Re-fetch the sessions after adding the new one
                 }
             } catch (error) {
                 console.error("Error adding session:", error);
@@ -71,7 +66,7 @@
                 });
 
                 if (res.ok) {
-                    await fetchSessions(); // Refresh list
+                    await fetchSessions(); // Re-fetch the sessions after marking it completed
                 }
             }
         } catch (error) {
@@ -87,7 +82,7 @@
             });
 
             if (res.ok) {
-                studySessions = studySessions.filter(session => session.id !== id); // Remove the session from the list
+                await fetchSessions(); // Re-fetch the sessions after deleting the session
             }
         } catch (error) {
             console.error("Error deleting session:", error);
